@@ -32,7 +32,7 @@ def rank_difficult_words(text: str, top_percent: int = 10) -> list:
     word_scores = {word: word_difficulty_score(word) for word in unique_words}
     print(word_scores)
     ranked_words = sorted(word_scores.items(), key=lambda item: item[1], reverse=True)
-    top_n = max(1, len(ranked_words) * top_percent // 100)
+    top_n = max(1, len(ranked_words) * (top_percent*2) // 100)
     return ranked_words[:top_n]
 
 
@@ -50,6 +50,8 @@ def analyze_text(text: str, top_percent: int = 10) -> list:
     analyzed = []
     for word, score in difficult_words:
         definition = lookup_definition(word)
+        if definition == 'No definition found.':
+            continue
         pinyin = ' '.join([''.join(syllable) for syllable in pypinyin.pinyin(word)])
         analyzed.append({
             'word': word,

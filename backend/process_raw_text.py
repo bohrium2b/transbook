@@ -1,7 +1,8 @@
 from easynmt import EasyNMT
 import pypinyin
 from rich.progress import Progress, SpinnerColumn, TextColumn
-
+from rich import print
+from word_definition import analyze_text
 
 model = EasyNMT('opus-mt')
 
@@ -13,39 +14,45 @@ def process_text(text):
     # Split the text into paragraphs
     paragraphs = text.split('\n\n')
     processed_paragraphs = []
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
+        task = progress.add_task("Translating and processing paragraphs...", total=len(paragraphs))
+        for paragraph in paragraphs:
+            # Translate each sentence in the paragraph
+            sentences = paragraph.split('. ')
+            translated_sentences = model.translate(sentences, target_lang='en')
 
-    for paragraph in paragraphs:
-        # Translate each sentence in the paragraph
-        sentences = paragraph.split('. ')
-        translated_sentences = model.translate(sentences, target_lang='en')
-
-        # Convert each sentence to Pinyin
-        pinyin_sentences = [pypinyin.pinyin(sentence) for sentence in sentences]
+            # Convert each sentence to Pinyin
+            pinyin_sentences = [pypinyin.pinyin(sentence) for sentence in sentences]
 
 
-        # Combine the translated sentences and their Pinyin
-        paragraph_processed = []
-        for original, translated, pinyin in zip(sentences, translated_sentences, pinyin_sentences):
-            paragraph_processed.append({
-                'original': original,
-                'english': translated,
-                'pinyin': ' '.join([''.join(syllable) for syllable in pinyin])
-            })
-        processed_paragraphs.append(paragraph_processed)
+            # Combine the translated sentences and their Pinyin
+            paragraph_processed = []
+            for original, translated, pinyin in zip(sentences, translated_sentences, pinyin_sentences):
+                # Analyse text for difficult words
+                difficult_words = analyze_text(original)
+                paragraph_processed.append({
+                    'original': original,
+                    'english': translated,
+                    'pinyin': ' '.join([''.join(syllable) for syllable in pinyin]),
+                    'difficult_words': difficult_words
+                })
+            processed_paragraphs.append(paragraph_processed)
+            progress.update(task, advance=1)
     return processed_paragraphs
 
 
 def test_process_text():
     sample_text = """如来佛祖拿出一件锦襕（lán）袈裟、一个九环锡杖[7]和三个金箍，说：“把袈裟和锡杖交给取经人自己用。这三个金箍能降伏神通广大的妖魔，将金箍戴在他们的头上，不听话可念紧箍咒，这样他们就会一心一意做取经人的徒弟了。”观音菩萨接了法旨，带着徒弟惠岸，径直走下灵山。"""
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
-        task = progress.add_task("Processing text...", total=None)
-        result = process_text(sample_text)
-        progress.update(task, completed=1)
+    result = process_text(sample_text)
+
     for para in result:
         for sentence in para:
             print(f"Original: {sentence['original']}")
             print(f"English: {sentence['english']}")
             print(f"Pinyin: {sentence['pinyin']}")
+            print("Difficult Words:")
+            for dw in sentence['difficult_words']:
+                print(f"  - Word: {dw['word']}, Score: {dw['score']:.2f}, Pinyin: {dw['pinyin']}, Definition: {dw['definition']}")
             print()
 
 if __name__ == "__main__":
