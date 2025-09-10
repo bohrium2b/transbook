@@ -15,8 +15,6 @@ def word_difficulty_score(word: str) -> float:
     # Filter out numbers, punctuation, and single characters, Chinese punctuation
     if len(word) == 1 or all('\u4e00' <= char <= '\u9fff' for char in word) == False or word in "，。！？；：“”‘’（）《》、—…·":
         freq = 1
-    # Debug print
-    print(f"Word: {word}, Frequency: {freq}")
     return -math.log(freq / (max(CORPUS_FREQ.values()) + 1))
 
 # Segment + rank 
@@ -30,7 +28,6 @@ def rank_difficult_words(text: str, top_percent: int = 10) -> list:
     words = jieba.lcut(text)
     unique_words = set(words)
     word_scores = {word: word_difficulty_score(word) for word in unique_words}
-    print(word_scores)
     ranked_words = sorted(word_scores.items(), key=lambda item: item[1], reverse=True)
     top_n = max(1, len(ranked_words) * (top_percent*2) // 100)
     return ranked_words[:top_n]

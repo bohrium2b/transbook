@@ -1,11 +1,12 @@
 from easynmt import EasyNMT
 import pypinyin
-from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich import print
+from rich.console import Console
 from word_definition import analyze_text
 
 model = EasyNMT('opus-mt')
-
+console = Console()
 
 def process_text(text):
     """
@@ -14,7 +15,7 @@ def process_text(text):
     # Split the text into paragraphs
     paragraphs = text.split('\n\n')
     processed_paragraphs = []
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}")) as progress:
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), console=console) as progress:
         task = progress.add_task("Translating and processing paragraphs...", total=len(paragraphs))
         for paragraph in paragraphs:
             # Translate each sentence in the paragraph
