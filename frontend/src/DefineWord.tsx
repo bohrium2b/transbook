@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import ReactDOM from 'react-dom/client';
 import { Dialog, DialogTitle, DialogContent, Typography } from '@mui/material';
+import { createRoot } from 'react-dom/client';
 
 // Step 1: React component
 type WordProps = {
@@ -32,21 +32,30 @@ export const DefineWord = ({ word, definition }: WordProps) => {
     );
 };
 
-// Step 2: Wrap React component in a native Web Component
-class DefineWordWC extends HTMLElement {
-    connectedCallback() {
-        const word = this.getAttribute('word') || '';
-        const definition = this.getAttribute('definition') || '';
 
-        // Create a div to attach React
-        const mountPoint = document.createElement('div');
-        this.appendChild(mountPoint);
+export class DefineWordElement extends HTMLElement {
+  connectedCallback() {
+    const word = this.getAttribute("word") || "";
 
-        // Render React component into this div
-        const root = ReactDOM.createRoot(mountPoint);
-        root.render(<DefineWord word={word} definition={definition} />);
+    // Grab inner HTML as children BEFORE attaching shadow
+    const definitionHTML = this.innerHTML;
+    console.log("Definition HTML:", definitionHTML);
+
+    // Clear out inner HTML to avoid duplication
+    this.innerHTML = "";
+
+    const shadow = this.attachShadow({ mode: "open" });
+    shadow.innerHTML = `<span id="react-root"></span>`;
+
+    const container = shadow.getElementById("react-root");
+    if (container) {
+      const root = createRoot(container);
+      root.render(<DefineWord word={word} definition={definitionHTML} />);
+    } else {
+      console.error("Failed to find #react-root in shadow DOM.");
     }
+  }
 }
 
-// Step 3: Define the custom element
-customElements.define('define-word', DefineWordWC);
+// Register custom element
+customElements.define("define-word", DefineWordElement);
