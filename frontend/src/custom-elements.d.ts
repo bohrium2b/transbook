@@ -7,5 +7,5 @@ declare global {
     }
   }
 }
-export {};
+export default {};
 // ---END OF FILEPATH

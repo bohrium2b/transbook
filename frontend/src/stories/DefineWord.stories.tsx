@@ -10,6 +10,7 @@ const meta: Meta<typeof DefineWord> = {
     definition: { control: 'text' },
   },
 };
+
 export default meta;
 
 type Story = StoryObj<typeof DefineWord>;

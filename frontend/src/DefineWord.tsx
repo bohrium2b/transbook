@@ -37,14 +37,10 @@ export class DefineWordElement extends HTMLElement {
   connectedCallback() {
     const word = this.getAttribute("word") || "";
 
-    // Grab inner HTML as children BEFORE attaching shadow
-    const definitionHTML = this.innerHTML;
-    console.log("Definition HTML:", definitionHTML);
-
-    // Clear out inner HTML to avoid duplication
-    this.innerHTML = "";
 
     const shadow = this.attachShadow({ mode: "open" });
+    const definitionHTML = this.innerHTML || shadow.innerHTML || "Definition not available.";
+    this.innerHTML = ""; // Clear light DOM content
     shadow.innerHTML = `<span id="react-root"></span>`;
 
     const container = shadow.getElementById("react-root");

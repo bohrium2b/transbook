@@ -1,5 +1,3 @@
-
-// ---FILEPATH /workspaces/transbook/frontend/src/stories/DefineWordWC.stories.tsx
 import '../custom-elements.d.ts';
 
 import type { Meta, StoryObj } from '@storybook/react';
@@ -20,6 +18,7 @@ export default meta;
 
 type Story = StoryObj<object>;
 
+
 export const Default: Story = {
   render: () => (
     <define-word word="人工智能">
@@ -30,8 +29,12 @@ export const Default: Story = {
 
 export const LongDefinition: Story = {
   render: () => (
-    <define-word word="翻译">
-      <p><b>翻译</b>是将一种语言的内容转换为另一种语言的过程。它可以促进不同文化之间的交流与理解。</p>
+    <define-word word="充电">
+      <p>充电<br/>
+        <br />
+        chōngdiàn
+        <br />
+        charge (a battery)</p>
     </define-word>
   ),
 };

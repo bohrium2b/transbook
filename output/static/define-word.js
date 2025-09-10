@@ -15542,12 +15542,10 @@ const KS = ({ word: a, definition: i }) => {
 };
 class Fm extends HTMLElement {
   connectedCallback() {
-    const i = this.getAttribute("word") || "", c = this.innerHTML;
-    console.log("Definition HTML:", c), this.innerHTML = "";
-    const o = this.attachShadow({ mode: "open" });
-    o.innerHTML = '<span id="react-root"></span>';
-    const f = o.getElementById("react-root");
-    f ? ZS.createRoot(f).render(/* @__PURE__ */ Bt.jsx(KS, { word: i, definition: c })) : console.error("Failed to find #react-root in shadow DOM.");
+    const i = this.getAttribute("word") || "", c = this.attachShadow({ mode: "open" }), o = this.innerHTML || c.innerHTML || "Definition not available.";
+    this.innerHTML = "", c.innerHTML = '<span id="react-root"></span>';
+    const f = c.getElementById("react-root");
+    f ? ZS.createRoot(f).render(/* @__PURE__ */ Bt.jsx(KS, { word: i, definition: o })) : console.error("Failed to find #react-root in shadow DOM.");
   }
 }
 customElements.define("define-word", Fm);
