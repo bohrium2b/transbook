@@ -1,6 +1,7 @@
 import jinja2
 import os
 from typing import List, Dict
+from rich import print
 
 
 def generate_report(paragraphs: List[Dict[str, str]], output_path: str) -> None:
@@ -25,9 +26,7 @@ def generate_report(paragraphs: List[Dict[str, str]], output_path: str) -> None:
                 definition = word_info.get('definition', 'No definition found.')
                 newsentence['original'] = newsentence['original'].replace(word, f'<define-word word="{word}">{definition}</define-word>')
             newparagraph.append(newsentence)
-            print(newsentence['original'])
         new_paragraphs.append(newparagraph)
-        print()
 
     output_from_parsed_template = template.render(paragraphs=new_paragraphs)
 
@@ -48,4 +47,4 @@ def generate_report(paragraphs: List[Dict[str, str]], output_path: str) -> None:
         if filename.endswith('.cjs'):
             base = filename[:-4]
             os.rename(os.path.join(static_dst, filename), os.path.join(static_dst, base + '.js'))
-    print(f"Report generated at {output_path}")
+    print(f"[bold green]✓ Report generated at:[/bold green] {output_path}")

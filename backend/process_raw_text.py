@@ -3,9 +3,11 @@ import pypinyin
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich import print
 from rich.console import Console
-from word_definition import analyze_text
+from langdetect import detect, DetectorFactory
+DetectorFactory.seed = 0  # For consistent results
 
-model = EasyNMT('opus-mt')
+
+model = EasyNMT('m2m_100_418M')
 console = Console()
 
 def process_text(text):
@@ -15,29 +17,44 @@ def process_text(text):
     # Split the text into paragraphs
     paragraphs = text.split('\n\n')
     processed_paragraphs = []
-    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), BarColumn(), console=console) as progress:
-        task = progress.add_task("Translating and processing paragraphs...", total=len(paragraphs))
+    print("[bold blue]Detecting language...[/bold blue]")
+    lang = detect(text)
+    print(f"[bold green]✓ Detected language:[/bold green] {lang}")
+    if lang != 'zh-cn' and lang != 'zh-tw' and lang != 'zh':
+        console.log(f"[red]Warning:[/red] Detected language is '{lang}', which may lead to inaccurate translations.")
+    with Progress() as progress:
+        task = progress.add_task("[bold blue]Translating and processing paragraphs...", total=len(paragraphs))
         for paragraph in paragraphs:
             # Translate each sentence in the paragraph
             sentences = paragraph.split('. ')
-            translated_sentences = model.translate(sentences, target_lang='en')
+            # Replace Chinese punctuation with English punctuation for better sentence splitting
+            sentences = [s.replace('。', '.').replace('！', '!').replace('？', '?').replace("、", ", ").strip() for s in sentences if s.strip()]
+            if not sentences:
+                progress.update(task, advance=1)
+                continue
+
+            translated_sentences = model.translate(sentences, target_lang='en', source_lang="zh")
+            # If paragraph ends with "I'm not sure what I'm going to do." replace with close quotation mark.
+            if translated_sentences and translated_sentences[-1].endswith("I'm not sure what I'm going to do."):
+                translated_sentences[-1] = translated_sentences[-1].replace("I'm not sure what I'm going to do.", "”")
 
             # Convert each sentence to Pinyin
             pinyin_sentences = [pypinyin.pinyin(sentence) for sentence in sentences]
 
-
+            
             # Combine the translated sentences and their Pinyin
             paragraph_processed = []
             for original, translated, pinyin in zip(sentences, translated_sentences, pinyin_sentences):
                 # Analyse text for difficult words
-                difficult_words = analyze_text(original)
+                # difficult_words = analyze_text(original)
                 paragraph_processed.append({
                     'original': original,
                     'english': translated,
                     'pinyin': ' '.join([''.join(syllable) for syllable in pinyin]),
-                    'difficult_words': difficult_words
+                    'difficult_words': []
                 })
             processed_paragraphs.append(paragraph_processed)
+            progress.console.print(f"[green]✓ Processed paragraph: {paragraph[:30]}...")
             progress.update(task, advance=1)
     return processed_paragraphs
 
