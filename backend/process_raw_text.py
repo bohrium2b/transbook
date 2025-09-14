@@ -4,13 +4,14 @@ from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich import print
 from rich.console import Console
 from langdetect import detect, DetectorFactory
+from translator import translate_text, bootstrap_translation_engine
 DetectorFactory.seed = 0  # For consistent results
 
 
 model = EasyNMT('m2m_100_418M')
 console = Console()
 
-def process_text(text):
+def process_text(text, model="easynmt"):
     """
     Process the raw input text and return a version with separated paragraphs, translated sentences, and Pinyin.
     """
@@ -22,18 +23,19 @@ def process_text(text):
     print(f"[bold green]✓ Detected language:[/bold green] {lang}")
     if lang != 'zh-cn' and lang != 'zh-tw' and lang != 'zh':
         console.log(f"[red]Warning:[/red] Detected language is '{lang}', which may lead to inaccurate translations.")
+    model = bootstrap_translation_engine(model)
     with Progress() as progress:
-        task = progress.add_task("[bold blue]Translating and processing paragraphs...", total=len(paragraphs))
+        task_translate = progress.add_task("[bold blue]Translating and processing paragraphs...", total=len(paragraphs))
         for paragraph in paragraphs:
             # Translate each sentence in the paragraph
             sentences = paragraph.split('. ')
             # Replace Chinese punctuation with English punctuation for better sentence splitting
-            sentences = [s.replace('。', '.').replace('！', '!').replace('？', '?').replace("、", ", ").strip() for s in sentences if s.strip()]
+            sentences = [s.replace('。', '. ').replace('！', '! ').replace('？', '?').replace("、", ", ").replace("，", ", ").replace("：", ": ").strip() for s in sentences if s.strip()]
             if not sentences:
-                progress.update(task, advance=1)
+                progress.update(task_translate, advance=1)
                 continue
 
-            translated_sentences = model.translate(sentences, target_lang='en', source_lang="zh")
+            translated_sentences = translate_text(model, sentences, source_lang='zh', target_lang='en', title="西游记", fullcontext="Source text refers to the classic 16th-century Chinese novel Journey to the West (Xi You Ji), a foundational work of Chinese literature blending Buddhist, Daoist, and Confucian themes. The narrative follows the pilgrimage of the Buddhist monk Tang Sanzang (also known as Xuanzang), who is tasked with traveling from China to India to retrieve sacred Buddhist scriptures. He is accompanied by three disciples: Sun Wukong (the Monkey King), a powerful and clever immortal being born from stone; Zhu Bajie (Pigsy), a gluttonous and lustful former celestial general reincarnated as a half-pig; and Sha Wujing (Sandy), a quiet and loyal river ogre. The group faces numerous challenges, including demons, monsters, and spiritual trials, many of which test their moral growth and inner discipline. The story combines adventure, allegory, and satire, with Sun Wukong being the most prominent and dynamic character. Proper nouns should be translated or transliterated consistently, and mythological or religious terms should be rendered accurately to preserve cultural context." + '\n'.join([p['english'] for para in processed_paragraphs for p in para]))
             # If paragraph ends with "I'm not sure what I'm going to do." replace with close quotation mark.
             if translated_sentences and translated_sentences[-1].endswith("I'm not sure what I'm going to do."):
                 translated_sentences[-1] = translated_sentences[-1].replace("I'm not sure what I'm going to do.", "”")
@@ -55,7 +57,7 @@ def process_text(text):
                 })
             processed_paragraphs.append(paragraph_processed)
             progress.console.print(f"[green]✓ Processed paragraph: {paragraph[:30]}...")
-            progress.update(task, advance=1)
+            progress.update(task_translate, advance=1)
     return processed_paragraphs
 
 

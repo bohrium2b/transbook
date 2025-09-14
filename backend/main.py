@@ -17,17 +17,19 @@ def main():
     parser = ArgumentParser(description="Chinese Text Processor")
     parser.add_argument("--input", default="input.txt", help="Path to the input text file")
     parser.add_argument("--output", default="output/report.html", help="Path to the output HTML file")
+    parser.add_argument("--model", default="easynmt", choices=["easynmt", "ollama"], help="Translation model to use")
     args = parser.parse_args()
 
     input_path = args.input if args.input != "input.txt" else None
     output_path = args.output if args.output != "output/report.html" else None
+    model_choice = args.model
 
     print("[bold blue]Welcome to the Chinese Text Processor![/bold blue]")
     if not input_path:
         input_path = Prompt.ask("[bold red]? Enter the path to the input text file[/bold red]", default="input.txt")
     if not output_path:
         output_path = Prompt.ask("[bold red]? Enter the desired output HTML file path[/bold red]", default="output/report.html")
-
+    
     if not os.path.exists(input_path):
         print(f"[bold red]Error:[/bold red] The file '{input_path}' does not exist.")
         return
@@ -37,8 +39,9 @@ def main():
     print(f"[bold green]✓ Loaded input file:[/bold green] {input_path}")
     from process_raw_text import process_text
     from generate_report import generate_report
+    print(f"[bold green]✓ Using translation model:[/bold green] {model_choice}")
     print("[bold blue]Processing text...[/bold blue]")
-    processed_paragraphs = process_text(raw_text)
+    processed_paragraphs = process_text(raw_text, model=model_choice)
 
     # Flatten the list of lists into a single list of paragraphs
     flattened_paragraphs = []
